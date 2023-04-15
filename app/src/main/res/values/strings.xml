@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Project</string>
     <string name="login_fragment">Please enter your login information:</string>
+    <string name="missingUserName">Please enter a username!</string>
+    <string name="missingUserPW">Please enter a password!</string>
+    <string name="wrongPW">The Password you have entered does not match! Please try again.</string>
+    <string name="noUser">Please Login to or create an account in order to select streaming services to check.</string>
 </resources>
