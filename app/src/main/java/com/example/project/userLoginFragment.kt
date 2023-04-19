@@ -34,23 +34,30 @@ class userLoginFragment : Fragment() {
             editTextObjUser.text = null
             editTextObjPW.text = null
 
+            val sharedPref = this.activity?.getSharedPreferences("$MODE_PRIVATE")
+            // Get name
+            val storedName = sharedPref?.getString("Username of  Subscriber", "")
+            val storedPw = sharedPref?.getString("Password of Subscriber", "")
+
             //VPC - check if the userName is available
-            if (userName != null){
+            if (userName != ""){
                 // here we need to compare the entered userName to ones in Shared Preferences to check for existing users
                 // I suggest a while loop to check userName against all entries in Shared prefs and set this flag
                 val foundUser = true
                 // else check PW entered against PW in shared preferences.
                 if (foundUser){
                     // if user PW on new user is null toast that they must enter a PW
-                    if(userPW == null){
+                    if(userPW == ""){
                         Toast.makeText(getActivity(), R.string.missingUserPW, Toast.LENGTH_SHORT).show()
                     }
                     //user entered a password
                     else{
                         //check PW entered against PW in shared preferences.
-                        if (true){ //the userPW == pw stored in Shared Prefs, for now toggling manually for tests
+                        if (userPW == storedPw){ //the userPW == pw stored in Shared Prefs, for now toggling manually for tests
                             // Set the active user as the user from shared prefs.
-
+                            val activeUserPreferences = activity?.getSharedPreferences(MODE_PRIVATE.toString())
+                            val text =   activeUserPreferences?.edit()
+                            text?.putString("activeUser",userName )
                             //for now just testing with a display of the user and PW entered
                             val checktext = loginView.findViewById<TextView>(R.id.textView_test)
                             checktext.text = "$userName $userPW"
@@ -67,14 +74,21 @@ class userLoginFragment : Fragment() {
                 // if the user name does not exist in sharedprefs,
                 // popup to ask user if they would like to add user
                 else{
-
+                    // assume we will add the new user name for now until we implement pop-up
+                    val sharedPreferences =this.activity?.getSharedPreferences(MODE_PRIVATE.toString())
+                    val editor = sharedPreferences?.edit()
+                    editor?.putBoolean("Netflix Subscriber", false) //default new users to be false
+                    editor?.putBoolean("Hulu Subscriber", false) //default new users to be false
+                    editor?.putString("Username of  Subscriber",userName )
+                    editor?.putString("Password of Subscriber",userPW )
+                    editor?.apply()
                 }
 
             }
             else {
                 //VPC - this isn't working, Should check with Dr. Albayram maybe need to import android.widget.Toast
                 // into the UserActivity.kt file?
-                Toast.makeText(getActivity(), R.string.missingUserName, Toast.LENGTH_SHORT).show()
+                Toast.makeText(activity, R.string.missingUserName, Toast.LENGTH_SHORT).show()
             }
 
         }

@@ -42,6 +42,9 @@ class UserActivity : AppCompatActivity() {
             if(checkActiveUser()){
                 HuluSet = checkboxHulu.isChecked
                 //Ramya - updated shared prefs for user here
+                val sharedPreferences = getPreferences(MODE_PRIVATE)
+                activeUser = sharedPreferences?.getString("Username of  Subscriber","").toString()
+                userText.text = activeUser
             }
         }
         //VPC - button click to bring up the user login Fragment

@@ -5,4 +5,6 @@
     <string name="missingUserPW">Please enter a password!</string>
     <string name="wrongPW">The Password you have entered does not match! Please try again.</string>
     <string name="noUser">Please Login to or create an account in order to select streaming services to check.</string>
+    <string name="APIkey">HCf7O95g6k5mNTilcYoMoGcNzCrcNa6K0swoBKo6</string>
+    <string name="attribution">Streaming data powered by Watchmode.com</string>
 </resources>
