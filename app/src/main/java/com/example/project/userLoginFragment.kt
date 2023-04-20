@@ -1,6 +1,9 @@
 package com.example.project
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
+import android.content.SharedPreferences
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -12,9 +15,14 @@ import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import com.google.gson.Gson
 
 class userLoginFragment : Fragment() {
-
+    lateinit var userName: String
+    lateinit var userPW: String
+    lateinit var storedName: String
+    lateinit var storedPW: String
+    lateinit var actUserSharedPref: SharedPreferences
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -25,8 +33,8 @@ class userLoginFragment : Fragment() {
         loginView.findViewById<Button>(R.id.button_login).setOnClickListener(){
             val editTextObjUser = loginView.findViewById<EditText>(R.id.editText_userName)
             val editTextObjPW = loginView.findViewById<EditText>(R.id.editText_password)
-            val userName = editTextObjUser.text.toString()
-            val userPW = editTextObjPW.text.toString()
+            userName = editTextObjUser.text.toString()
+            userPW = editTextObjPW.text.toString()
 
             //clear fields and hide keyboards
             editTextObjUser.hideKeyboard()
@@ -34,10 +42,8 @@ class userLoginFragment : Fragment() {
             editTextObjUser.text = null
             editTextObjPW.text = null
 
-            val sharedPref = this.activity?.getSharedPreferences("$MODE_PRIVATE")
-            // Get name
-            val storedName = sharedPref?.getString("Username of  Subscriber", "")
-            val storedPw = sharedPref?.getString("Password of Subscriber", "")
+            // Get name and password of the current logged in user or null if none
+            getActiveUser()
 
             //VPC - check if the userName is available
             if (userName != ""){
@@ -52,12 +58,11 @@ class userLoginFragment : Fragment() {
                     }
                     //user entered a password
                     else{
+
                         //check PW entered against PW in shared preferences.
-                        if (userPW == storedPw){ //the userPW == pw stored in Shared Prefs, for now toggling manually for tests
+                        if (userPW == storedPW){
                             // Set the active user as the user from shared prefs.
-                            val activeUserPreferences = activity?.getSharedPreferences(MODE_PRIVATE.toString())
-                            val text =   activeUserPreferences?.edit()
-                            text?.putString("activeUser",userName )
+
                             //for now just testing with a display of the user and PW entered
                             val checktext = loginView.findViewById<TextView>(R.id.textView_test)
                             checktext.text = "$userName $userPW"
@@ -74,14 +79,8 @@ class userLoginFragment : Fragment() {
                 // if the user name does not exist in sharedprefs,
                 // popup to ask user if they would like to add user
                 else{
-                    // assume we will add the new user name for now until we implement pop-up
-                    val sharedPreferences =this.activity?.getSharedPreferences(MODE_PRIVATE.toString())
-                    val editor = sharedPreferences?.edit()
-                    editor?.putBoolean("Netflix Subscriber", false) //default new users to be false
-                    editor?.putBoolean("Hulu Subscriber", false) //default new users to be false
-                    editor?.putString("Username of  Subscriber",userName )
-                    editor?.putString("Password of Subscriber",userPW )
-                    editor?.apply()
+                    // assume we will add the new user name for now until we implement pop-up for user confirmation
+                    createNewUser()
                 }
 
             }
@@ -103,6 +102,46 @@ class userLoginFragment : Fragment() {
         return loginView
     }
 
+    //VPC - create a new user from the global variables and defaults
+    private fun createNewUser(){
+
+        //initializing the shared prefs variable and editor
+        val allUserSharedPreferences =this.activity?.getSharedPreferences(R.string.allUsers.toString(),MODE_PRIVATE)
+        val usersEditor = allUserSharedPreferences?.edit()
+
+        //creating an array to store the PW, Netflix enable, and hulu enable as a GSON string
+        val userList = ArrayList<String>()
+        val userGSON = Gson() // creating a GSON instance
+
+        //might want to if check to see user supplied a PW if not done above
+        userList.add(userPW)    // arg 1 = the newly entered user PW
+        userList.add("false")   // arg 2 = Netflix enabled bool as string, default false
+        userList.add("false")   // arg 3 = Hulu enabled bool as string, default false
+        val userJsonString = userGSON.toJson(userList)
+
+        // putting in shared prefs the userName as a key and their PW/config information as a set of data values
+        // using the order from the lines above
+        usersEditor?.putString(userName, userJsonString) //default new users to be false
+        usersEditor?.apply()
+
+    }
+    //VPC - setting the active user in shared preferences
+    private fun setActiveUser(){
+        //
+        val actUserEdittext =   actUserSharedPref?.edit()
+        actUserEdittext?.clear()                            //take the current active user out
+        actUserEdittext?.putString("activeUser",userName )  //put new active user in Sprefs
+        actUserEdittext?.putString("activePW",userPW )      // put new active PW in Sprefs
+        actUserEdittext?.apply()
+
+    }
+
+    //VPC - getting setting the global variables with user and PW from shared preferences
+    private fun getActiveUser(){
+        actUserSharedPref = this.requireActivity().getSharedPreferences(R.string.activeUser.toString(), MODE_PRIVATE)
+        storedName = actUserSharedPref?.getString("Username of  Subscriber", "").toString()
+        storedPW = actUserSharedPref?.getString("Password of Subscriber", "").toString()
+    }
     private fun View.hideKeyboard(){
         val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(windowToken,0)
