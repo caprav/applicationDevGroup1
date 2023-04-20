@@ -68,7 +68,7 @@ class userLoginFragment : Fragment() {
                             checktext.text = "$userName $userPW"
 
                             //uncomment this line to close the fragment once the code above is implemented
-                            //parentFragmentManager.popBackStack()
+                            parentFragmentManager.popBackStack()
                         }
                         else{
                             Toast.makeText(getActivity(), R.string.wrongPW, Toast.LENGTH_LONG).show()
