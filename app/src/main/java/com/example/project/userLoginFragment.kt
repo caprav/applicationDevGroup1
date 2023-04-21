@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -16,6 +17,7 @@ import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class userLoginFragment : Fragment() {
     lateinit var userName: String
@@ -23,6 +25,8 @@ class userLoginFragment : Fragment() {
     lateinit var storedName: String
     lateinit var storedPW: String
     lateinit var actUserSharedPref: SharedPreferences
+    lateinit var allUserSharedPreferences: SharedPreferences
+    private val TAG = "userFragment"
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -34,8 +38,9 @@ class userLoginFragment : Fragment() {
             val editTextObjUser = loginView.findViewById<EditText>(R.id.editText_userName)
             val editTextObjPW = loginView.findViewById<EditText>(R.id.editText_password)
             userName = editTextObjUser.text.toString()
+            Log.d(TAG, "userName = $userName")
             userPW = editTextObjPW.text.toString()
-
+            Log.d(TAG, "userName = $userPW")
             //clear fields and hide keyboards
             editTextObjUser.hideKeyboard()
             editTextObjPW.hideKeyboard()
@@ -47,20 +52,17 @@ class userLoginFragment : Fragment() {
 
             //VPC - check if the userName is available
             if (userName != ""){
-                // here we need to compare the entered userName to ones in Shared Preferences to check for existing users
-                // I suggest a while loop to check userName against all entries in Shared prefs and set this flag
-                val foundUser = true
-                // else check PW entered against PW in shared preferences.
-                if (foundUser){
+                // checkForExistingUser returns true if user exists else false
+                if (checkForExistingUser()){
                     // if user PW on new user is null toast that they must enter a PW
                     if(userPW == ""){
-                        Toast.makeText(getActivity(), R.string.missingUserPW, Toast.LENGTH_SHORT).show()
+                        Toast.makeText(activity, R.string.missingUserPW, Toast.LENGTH_SHORT).show()
                     }
                     //user entered a password
                     else{
 
                         //check PW entered against PW in shared preferences.
-                        if (userPW == storedPW){
+                        if (userPW == storedPW){ //storedPW is the wrong PW, need to get from a match in the allusers SP
                             // Set the active user as the user from shared prefs.
 
                             //for now just testing with a display of the user and PW entered
@@ -71,7 +73,7 @@ class userLoginFragment : Fragment() {
                             parentFragmentManager.popBackStack()
                         }
                         else{
-                            Toast.makeText(getActivity(), R.string.wrongPW, Toast.LENGTH_LONG).show()
+                            Toast.makeText(activity, R.string.wrongPW, Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -106,7 +108,7 @@ class userLoginFragment : Fragment() {
     private fun createNewUser(){
 
         //initializing the shared prefs variable and editor
-        val allUserSharedPreferences =this.activity?.getSharedPreferences(R.string.allUsers.toString(),MODE_PRIVATE)
+        allUserSharedPreferences =this.requireActivity().getSharedPreferences(R.string.allUsers.toString(),MODE_PRIVATE)
         val usersEditor = allUserSharedPreferences?.edit()
 
         //creating an array to store the PW, Netflix enable, and hulu enable as a GSON string
@@ -125,7 +127,27 @@ class userLoginFragment : Fragment() {
         usersEditor?.apply()
 
     }
-    //VPC - setting the active user in shared preferences
+    //VPC - need to check the allUsers preferences to see if the user specified is stored
+    // return true if user found else false
+    private fun checkForExistingUser(): Boolean {
+        //These lines deserialze the user data based on their user name
+        allUserSharedPreferences =
+            this.requireActivity().getSharedPreferences(R.string.allUsers.toString(), MODE_PRIVATE)
+        val userConfigsList = allUserSharedPreferences.getString(userName, "")
+        val getUsersGson = Gson()
+        val stringType = object : TypeToken<List<String>>() {}.type
+
+        return if (userConfigsList != "") { //check that we did find a user match in shared prefs
+            val userConfigsStringList =
+                getUsersGson.fromJson<List<String>>(userConfigsList, stringType)
+            //setting the global var for stored PW to the one found for the user attempting to log in
+            storedPW = userConfigsStringList[0]
+            true
+        } else
+            false
+    }
+
+        //VPC - setting the active user in shared preferences
     private fun setActiveUser(){
         //
         val actUserEdittext =   actUserSharedPref?.edit()
@@ -133,14 +155,12 @@ class userLoginFragment : Fragment() {
         actUserEdittext?.putString("activeUser",userName )  //put new active user in Sprefs
         actUserEdittext?.putString("activePW",userPW )      // put new active PW in Sprefs
         actUserEdittext?.apply()
-
     }
 
     //VPC - getting setting the global variables with user and PW from shared preferences
     private fun getActiveUser(){
         actUserSharedPref = this.requireActivity().getSharedPreferences(R.string.activeUser.toString(), MODE_PRIVATE)
         storedName = actUserSharedPref?.getString("Username of  Subscriber", "").toString()
-        storedPW = actUserSharedPref?.getString("Password of Subscriber", "").toString()
     }
     private fun View.hideKeyboard(){
         val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
