@@ -83,6 +83,8 @@ class userLoginFragment : Fragment() {
                 else{
                     // assume we will add the new user name for now until we implement pop-up for user confirmation
                     createNewUser()
+                    Toast.makeText(activity, R.string.userCreated, Toast.LENGTH_SHORT).show()
+                    parentFragmentManager.popBackStack()
                 }
 
             }
