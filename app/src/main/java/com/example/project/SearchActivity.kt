@@ -9,6 +9,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageButton
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -18,6 +20,7 @@ import retrofit2.create
 
 class SearchActivity : AppCompatActivity() {
     lateinit var userSearchInput: String
+    //lateinit var viewModel: titleViewModel //maybe delete this
     private val TAG = "SearchActivity"
     private var BASE_URL_SEARCH = "https://api.watchmode.com/v1/search/"
 
@@ -34,20 +37,28 @@ class SearchActivity : AppCompatActivity() {
             Log.d(TAG, "user searched for: $userSearchInput")
             editTextsearchInput.hideKeyboard()
 
-
-            // ArrayList Stores List of Movies From API
+            // creating an array of titles and adapter for the RecyclerView to use
+            //MG - ArrayList Stores List of Movies From API
             val searchList = ArrayList<title_results>()
+            //val titlesData = ArrayList<title_results>() // redundantly created
+            val resultsAdapter = titleRecyclerAdapter(searchList)
             // Create Retrofit
             val searchRetrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL_SEARCH)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()
 
-            //Onclick complete API Call
-            val searchMovieAPI = searchRetrofit.create(watchmodeAPISearch::class.java)
-            val searchTerm = findViewById<EditText>(R.id.editText_searchInput).text.toString()
+            val resultsRecyclerView = findViewById<RecyclerView>(R.id.recycler_temp_results)
+            resultsRecyclerView.adapter = resultsAdapter
+            resultsRecyclerView.layoutManager = LinearLayoutManager(this)
 
-            searchMovieAPI.search(API_KEY,"name",searchTerm).enqueue(object: Callback<SearchData> {
+            val searchMovieAPI = searchRetrofit.create(watchmodeAPISearch::class.java)
+
+            //MG - Onclick complete API Call
+            val searchTerm = findViewById<EditText>(R.id.editText_searchInput).text.toString() //redundant with userSearchInput
+            //HCf7O95g6k5mNTilcYoMoGcNzCrcNa6K0swoBKo6 // R.string.APIkey.toString()
+            searchMovieAPI.search(resources.getString(R.string.watchmodeAPIkey),"name",searchTerm).enqueue(object:
+                Callback<SearchData> {
 
                 override fun onResponse(call: Call<SearchData>, response: Response<SearchData>) {
                     Log.d(TAG, "onResponse: $response")
@@ -68,7 +79,7 @@ class SearchActivity : AppCompatActivity() {
 
                     // Update the adapter with the new data
                     searchList.addAll(body.title_results)
-                    //adapter.notifyDataSetChanged()Log.d(TAG, "onResponse: $response")
+                    resultsAdapter.notifyDataSetChanged()
 
                 }
 
@@ -76,15 +87,13 @@ class SearchActivity : AppCompatActivity() {
                     Log.d(TAG, "onFailure : $t")
                 }
 
-
             })
 
-
             //inflate results fragment
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.container_search, TitleSearchFragment())
-                .addToBackStack(null)
-                .commit()
+//            supportFragmentManager.beginTransaction()
+//                .replace(R.id.container_search, TitleSearchFragment())
+//                .addToBackStack(null)
+//                .commit()
         }
 
     }

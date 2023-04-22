@@ -14,6 +14,8 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.create
@@ -30,6 +32,10 @@ class MainActivity : AppCompatActivity() {
             .build()
         titlesRetrofit.create(watchmodeAPI::class.java)
 
+        //VPC - adding the main recycler
+        //val mainRecycView = findViewById<RecyclerView>(R.id.recycler_main_results)
+        //mainRecycView.adapter = titleRecyclerAdapter()
+        //mainRecycView.layoutManager = LinearLayoutManager(this)
 
         //VPC - creating user activity launcher
         val userActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->

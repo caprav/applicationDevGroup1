@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class titleRecyclerAdapter : RecyclerView.Adapter<titleRecyclerAdapter.titleViewHolder>() {
+class titleRecyclerAdapter(val titles: ArrayList<title_results>) : RecyclerView.Adapter<titleRecyclerAdapter.titleViewHolder>() {
 
     // VPC - I am a little uncertain if the View should be delcared in the row below.
     // if there are problems with the RV, then this might have to reference the fragment?
@@ -28,10 +28,17 @@ class titleRecyclerAdapter : RecyclerView.Adapter<titleRecyclerAdapter.titleView
     override fun getItemCount(): Int {
         // VPC - setting to s static value for now, but will need to eventually replace with
         // the number of search results returned from our query
-        return 20
+        return titles.count()
     }
 
     override fun onBindViewHolder(holder: titleViewHolder, position: Int) {
+        //get one of the titles in the result set at the passed position
+        val currentTitle = titles[position]
+        //assign values to each row in the RecyclerView from the data class object
+        holder.contentTitle.text = currentTitle.name
+        holder.contentYear.text = currentTitle.year.toString()
+        holder.contentType.text = currentTitle.type
+        //holder.contentPosterImg = TBD
 
     }
 
