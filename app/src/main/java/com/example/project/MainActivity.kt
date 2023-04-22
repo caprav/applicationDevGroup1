@@ -30,6 +30,7 @@ class MainActivity : AppCompatActivity() {
             .build()
         titlesRetrofit.create(watchmodeAPI::class.java)
 
+
         //VPC - creating user activity launcher
         val userActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
