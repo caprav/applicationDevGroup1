@@ -1,5 +1,6 @@
 package com.example.project
 
+import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -9,10 +10,16 @@ import android.widget.CheckBox
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 class UserActivity : AppCompatActivity() {
     lateinit var activeUser: String
     lateinit var actUserSharedPref: SharedPreferences
+    lateinit var allUserSharedPreferences : SharedPreferences
+
+   // val userEditor = allUserSharedPreferences?.edit()
+
     //Ramya, can we load these values for the active user from shared prefs here
     // if no active user maybe there's a way we can default them to false
     var NetflixSet = false  //global variable to say if Netflix is enabled for a user
@@ -25,9 +32,14 @@ class UserActivity : AppCompatActivity() {
         val checkboxNetflix = findViewById<CheckBox>(R.id.checkBox_netflix)
         val checkboxHulu = findViewById<CheckBox>(R.id.checkBox_hulu)
         val userText = findViewById<TextView>(R.id.textView_activeUser)
-
+        allUserSharedPreferences = getSharedPreferences(R.string.allUsers.toString(), MODE_PRIVATE)
         //VPC -getting the user/settings from Shared preferences on Activity create
         getActiveUser() //sets activeUser from SharedPrefs
+        if(activeUser != ""){
+
+            getActiveUserSettings()
+        }
+
         userText.text = activeUser
         checkboxNetflix.isChecked = NetflixSet
         checkboxHulu.isChecked = HuluSet
@@ -64,15 +76,54 @@ class UserActivity : AppCompatActivity() {
         activeUser = actUserSharedPref?.getString("Username of  Subscriber", "").toString()
     }
 
+    @SuppressLint("CommitPrefEdits")
+    private fun getActiveUserSettings() {
+        val gson = Gson()
+        val stringType = object : TypeToken<List<String>>() {}.type
+        var usernameSaved = allUserSharedPreferences.getString(activeUser, "")
+        val userConfigsStringList =
+            gson.fromJson<List<String>>(usernameSaved, stringType)
+        // val userEditor = allUserSharedPreferences?.edit()
+        // usernameSaved = allUserSharedPreferences.getString(activeUser,"")
+        if (usernameSaved != null) {
+            NetflixSet = userConfigsStringList[1].toBoolean()
+            HuluSet = userConfigsStringList[2].toBoolean()
+        }
 
-    private fun getActiveUserSettings(){
-        val allUserSharedPreferences = getSharedPreferences(R.string.allUsers.toString(), MODE_PRIVATE)
-        //Ramya - Can you check the last 5 minutes of the 03-08-2021 recorded lecture to get the
-        // data that was set in the createNewUser function in the userLoginFragment? then test out
-        // all of the user logic?
+
     }
+   private fun netflixUser(){
+       val gson2 = Gson()
+       val stringType = object : TypeToken<List<String>>() {}.type
+       var usernameSaved = allUserSharedPreferences.getString(activeUser,"")
+       val userEditor = allUserSharedPreferences?.edit()
+       val userConfigsStringList =
+           gson2.fromJson<List<String>>(usernameSaved, stringType).toMutableList()
+       userConfigsStringList[1] = NetflixSet.toString()
+       val userList = ArrayList<String>()
+       //userList.add("true")
+       val userJsonString = gson2.toJson(userList)
+       userEditor?.putString(usernameSaved, userJsonString) //default new users to be false
+       userEditor?.apply()
+    }
+    private fun huluUser(){
+        val gson2 = Gson()
+        val stringType = object : TypeToken<List<String>>() {}.type
+        var usernameSaved = allUserSharedPreferences.getString(activeUser,"")
+        val userEditor = allUserSharedPreferences?.edit()
+        val userConfigsStringList =
+            gson2.fromJson<List<String>>(usernameSaved, stringType).toMutableList()
+        userConfigsStringList[2] = HuluSet.toString()
+        val userList = ArrayList<String>()
+        //userList.add("true")
+        val userJsonString = gson2.toJson(userList)
+        userEditor?.putString(usernameSaved, userJsonString) //default new users to be false
+        userEditor?.apply()
+
+    }
+
     private fun checkActiveUser(): Boolean{
-        return if (activeUser != null){
+        return if (activeUser != ""){
             true
         } else{
             Toast.makeText(this, R.string.noUser, Toast.LENGTH_SHORT).show()
