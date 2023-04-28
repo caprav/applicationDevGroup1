@@ -1,10 +1,10 @@
 package com.example.project
 
-data class titleData(
-    val titles: List<title>
+data class contentData(
+    val titles: List<content_title>
 )
 
-data class title(
+data class content_title(
     val id: Int,
     val title: String,
     val year: Int,

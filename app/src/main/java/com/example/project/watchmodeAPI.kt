@@ -12,8 +12,8 @@ interface watchmodeAPI {
 
     //See Lect 11 slide 40 for formats, and 4-12-21 recorded lecture ~20:00 mark
     @GET(".")
-    fun getNetflixContent(  @Query("apiKey") keyString: String,
-                            @Query("source_ids") sourceIds: Int,
-                            @Query("limit") titlesLimit: Int): Call<Any>
+    fun getContent(  @Query("apiKey") keyString: String,
+                            @Query("source_ids") sourceIds: Int): Call<contentData> // Netflix source = 203, hulu source = 157
+                           // @Query("limit") titlesLimit: Int): Call<Any> //I think this is just for viewing raw payload
 
 }
