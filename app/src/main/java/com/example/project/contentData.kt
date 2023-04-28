@@ -5,11 +5,13 @@ data class contentData(
 )
 
 data class content_title(
-    val id: Int,
-    val title: String,
-    val year: Int,
-    val imdb_id: String,
-    val type: String
+
+    var sourceID: Int,
+    var id: Int,
+    var title: String,
+    var year: Int,
+    var imdb_id: String,
+    var type: String
 )
 // new line
 //{
