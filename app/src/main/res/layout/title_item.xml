@@ -30,7 +30,7 @@
 
     <TextView
         android:id="@+id/textView_year"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="25dp"
         android:layout_marginStart="8dp"
         android:text="Year"
@@ -42,7 +42,7 @@
         android:id="@+id/textView_contentType"
         android:layout_width="0dp"
         android:layout_height="25dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="24dp"
         android:text=" Content Type"
         android:textSize="16sp"
         app:layout_constraintEnd_toEndOf="parent"

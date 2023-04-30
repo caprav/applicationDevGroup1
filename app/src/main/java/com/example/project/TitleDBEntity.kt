@@ -1,10 +1,11 @@
 package com.example.project
-/*
+
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 //VPC - for storing all data pulled down associated to the source
 @Entity(tableName = "titles_table")
+
 data class TitleDBEntity(
 
     @PrimaryKey(autoGenerate = true)
@@ -16,4 +17,3 @@ data class TitleDBEntity(
     var imdb_id: String ,
     var type: String
 )
-*/

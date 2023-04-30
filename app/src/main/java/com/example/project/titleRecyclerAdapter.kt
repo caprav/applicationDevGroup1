@@ -40,7 +40,6 @@ class titleRecyclerAdapter(val rcvTitles: ArrayList<title_results>) : RecyclerVi
         holder.contentYear.text = currentTitle.year.toString()
         holder.contentType.text = currentTitle.type
         //holder.contentPosterImg = TBD
-
     }
 
 }

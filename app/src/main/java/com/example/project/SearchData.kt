@@ -12,7 +12,6 @@ data class title_results(
     val type: String
 )
 
-
 /* Example Response From API
 
 {
