@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     //var HuluSourceID = 157
     private var sourceList = listOf(203, 157) //NetflixSourceID = 203; HuluSourceID = 157
     lateinit var db: TitleRoomDB //global var db for type room db
+    private var availPageCnt: Int = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,56 +64,72 @@ class MainActivity : AppCompatActivity() {
 
         // VPC - Loop should execute a call for each of the sources to the API netflix(203) and hulu(157)
         for (callSourceId in sourceList){
-            getmoviesAPI.getContent(resources.getString(R.string.watchmodeAPIkey), callSourceId) //sourceId previously hardcoded as NetflixSourceID
-                .enqueue(object :
-                    Callback<contentData> {
-                    override fun onResponse(
-                        call: Call<contentData>,
-                        mainResponse: Response<contentData>
-                    ) {
-                        Log.d(TAG, "onResponse: $mainResponse")
-                        var contentBody = mainResponse.body()
+            var page_counter = 1
+            //VPC - need to implement a do while. First exec of loop will tell us how many pages we need to hit for API response.
+            // the return limit is 250 titles per page,
+            do {
+                getmoviesAPI.getContent(
+                    resources.getString(R.string.watchmodeAPIkey),
+                    "movie",
+                    page_counter,
+                    callSourceId
+                ) //sourceId previously hardcoded as NetflixSourceID
+                    .enqueue(object :
+                        Callback<contentData> {
+                        override fun onResponse(
+                            call: Call<contentData>,
+                            mainResponse: Response<contentData>
+                        ) {
+                            Log.d(TAG, "onResponse: $mainResponse")
+                            var contentBody = mainResponse.body()
 
-                        if (mainResponse == null) {
-                            Log.w(TAG, "Valid response was not received")
-                            return
+                            if (mainResponse == null) {
+                                Log.w(TAG, "Valid response was not received")
+                                return
+                            }
+                            //VPC = getting the total number of pages from the response
+                            // safe call default o 0 if we get no response so we don't inf loop
+                            availPageCnt = contentBody?.total_pages?.toInt() ?: 0
+                            Log.d(TAG, "onResponse: $availPageCnt for source $callSourceId")
+
+                            // MG - The following log messages are just for testing purpose
+                            Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
+                            Log.d(TAG, "Title: ${contentBody?.titles?.get(0)?.title}")
+                            Log.d(TAG, "Year: ${contentBody?.titles?.get(0)?.year}")
+                            Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
+                            Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")
+                            Log.d(TAG, "call source: $callSourceId    size of content body:$")
+                            // Update the adapter with the data from the API call
+                            contentBody?.titles?.let { availableList.addAll(it) }
+
+                            //VPC - Add the source ID to each record. This is why we cannot just call the API once with both source IDs
+                            // we need to know for each record what service streams the title.
+                            for (content_title in contentBody?.titles!!) {
+                                content_title.sourceID = callSourceId
+                            }
+
+                            //VPC - Here we need to call putIntoDB once it is implemented so we can cross reference
+                            // these records in the search functionality.
+                            putIntoDB(contentBody.titles)
+
+                            //following line randomized all info in the array before passing it to the recyclerView.
+                            Collections.shuffle(contentBody.titles)
+                            availableResultsAdapter.notifyDataSetChanged()
                         }
-                        // MG - The following log messages are just for testing purpose
-                        Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
-                        Log.d(TAG, "Title: ${contentBody?.titles?.get(0)?.title}")
-                        Log.d(TAG, "Year: ${contentBody?.titles?.get(0)?.year}")
-                        Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
-                        Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")
-                        Log.d(TAG, "call source: $callSourceId    size of content body:$")
-                        // Update the adapter with the data from the API call
-                        contentBody?.titles?.let { availableList.addAll(it) }
 
-                        //VPC - Add the source ID to each record. This is why we cannot just call the API once with both source IDs
-                        // we need to know for each record what service streams the title.
-                        for (content_title in contentBody?.titles!!) {
-                            content_title.sourceID = callSourceId
+                        override fun onFailure(call: Call<contentData>, t: Throwable) {
+                            Log.d(TAG, "onFailure : $t")
                         }
-
-                        //VPC - Here we need to call putIntoDB once it is implemented so we can cross reference
-                        // these records in the search functionality.
-                        putIntoDB(contentBody.titles)
-
-                        //following line randomized all info in the array before passing it to the recyclerView.
-                        Collections.shuffle(contentBody.titles)
-                        availableResultsAdapter.notifyDataSetChanged()
-                    }
-
-                    override fun onFailure(call: Call<contentData>, t: Throwable) {
-                        Log.d(TAG, "onFailure : $t")
-                    }
-                })
+                    })
+                //increment so that next pass gets the next page of API responses
+                page_counter ++
+            } while(page_counter <= availPageCnt)
         }
         //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
         // for now going to use a button to load the DB
    /*     findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
             putIntoDB(availableResultsAdapter.mainTitles)
         }*/
-
 
         //VPC - creating user activity launcher
         val userActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -173,7 +190,7 @@ class MainActivity : AppCompatActivity() {
 
         Thread {
             Log.d(TAG, "Wiping the title database")
-            //The implementation of this was thanks to:
+            //VPC - The implementation of this was thanks to:
             // https://stackoverflow.com/questions/44244508/room-persistance-library-delete-all
             db.titleDAO().clearTitleTable()
             // We cannot call showDialog from a non-UI thread, instead we can call it from a runOnUiThread to access our views

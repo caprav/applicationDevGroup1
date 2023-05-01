@@ -1,10 +1,12 @@
 package com.example.project
 
 data class contentData(
-    val titles: List<content_title>
+    val titles: List<content_title>,
+    var total_pages: Int
 )
 
 data class content_title(
+
 
     var sourceID: Int,
     var id: Int,
