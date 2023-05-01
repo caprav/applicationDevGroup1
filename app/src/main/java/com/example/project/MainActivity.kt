@@ -41,7 +41,8 @@ class MainActivity : AppCompatActivity() {
         //VPC - building the database to store all titles we pull down
         db = Room.databaseBuilder(
             applicationContext, TitleRoomDB::class.java, "titles.db"
-        ).build()
+        ).fallbackToDestructiveMigration() // this resolves some errors, credit to https://stackoverflow.com/questions/49629656/please-provide-a-migration-in-the-builder-or-call-fallbacktodestructivemigration
+            .build()
 
         //VPC - This will wipe out persisted data in the db from the last run of the application. We always
         // want to get the latest data from the APIs
@@ -106,7 +107,14 @@ class MainActivity : AppCompatActivity() {
                     }
                 })
         }
-            //VPC - creating user activity launcher
+        //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
+        // for now going to use a button to load the DB
+   /*     findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
+            putIntoDB(availableResultsAdapter.mainTitles)
+        }*/
+
+
+        //VPC - creating user activity launcher
         val userActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 // can use this section to get back info passed from the user Intent
@@ -137,13 +145,14 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("SuspiciousIndentation")
     private fun putIntoDB(arrayListContent: List<content_title>){
         var temptitleDBEntity: TitleDBEntity
-        for(content_title in arrayListContent){
-            Thread {
-                Log.d(TAG, "Populating records into the DB")
+        Log.d(TAG, "Populating records into the DB")
 
-                for(content_title in arrayListContent){
+        Thread {
+            for(content_title in arrayListContent){
                 //putting the data from one data class into the other
                 temptitleDBEntity = TitleDBEntity(
+                    0,              //see ~44:30 of 4/19/2023 lecture for auto-increment
+                    // and double check the dao setup for your PK... compare to the room DB project
                     content_title.sourceID,
                     content_title.id,
                     content_title.title,
@@ -151,14 +160,13 @@ class MainActivity : AppCompatActivity() {
                     content_title.imdb_id,
                     content_title.type
                 )
-                    db.titleDAO().insertTitle(temptitleDBEntity)
-                }
-
-                runOnUiThread {
+                db.titleDAO().insertTitle(temptitleDBEntity)
+            }
+            runOnUiThread {
                     // Do your UI operations
                 }
             }.start()
-        }
+        Log.d(TAG, "Done Updating DB")
     }
     //VPC - This function will delete all of the records in the DB and should be done on startup or if the user is changed
     private fun clearDatabase(){

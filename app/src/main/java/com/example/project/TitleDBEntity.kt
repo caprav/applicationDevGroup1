@@ -9,7 +9,7 @@ import androidx.room.PrimaryKey
 data class TitleDBEntity(
 
     @PrimaryKey(autoGenerate = true)
-
+    var primaryKey: Int,
     var contentSourceId: Int,
     var id: Int,                //VPC - maybe use column info to specify this is the watchmodeAPI content ID?
     var title: String,

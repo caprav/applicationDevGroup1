@@ -32,4 +32,8 @@ interface TitleDBDAO {
     //this will clear all data from the existing table. Should be done on app startup
     @Query("DELETE FROM titles_table")
     public fun clearTitleTable()
+
+    // should create a count query so you can check how many records are present
+    // from a button click on the interface. That could be helpful in troubleshooting
+
 }
