@@ -7,6 +7,7 @@
     <string name="userCreated">A new user has been created!</string>
     <string name="noUser">Please Login to or create an account in order to select streaming services to check.</string>
     <string name="watchmodeAPIkey">HCf7O95g6k5mNTilcYoMoGcNzCrcNa6K0swoBKo6</string>
+    <string name="IMDBAPIkey">k_f41jl9sn</string>
     <string name="attribution">Streaming data powered by Watchmode.com</string>
     <string name="allUsers">AllUsersPreferences</string>
     <string name="activeUser">ActiveUserPreferences</string>
