@@ -24,6 +24,7 @@ data class knownFor(
     val id: String,
     val title: String,
     val fullTitle: String,
+    val role: String,
     val image: String,
 )
 

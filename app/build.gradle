@@ -26,11 +26,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17 //originally VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_17 //originally VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11 // VERSION_17 //originally VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_11 //VERSION_17 //originally VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = '17' // originally 1.8
+        jvmTarget = '11' // originally 1.8 //17
     }
 //adding this from https://kotlinlang.org/docs/gradle-configure-project.html#gradle-java-toolchains-support
  //   kotlin {

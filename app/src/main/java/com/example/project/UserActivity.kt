@@ -90,7 +90,6 @@ class UserActivity : AppCompatActivity() {
             HuluSet = userConfigsStringList[2].toBoolean()
         }
 
-
     }
    private fun netflixUser(){
        val gson2 = Gson()

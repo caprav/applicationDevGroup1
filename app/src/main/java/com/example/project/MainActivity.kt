@@ -24,12 +24,15 @@ import java.util.Collections
 
 class MainActivity : AppCompatActivity() {
     private var BASE_URL = "https://api.watchmode.com/v1/list-titles/"
-    private val TAG = "MAINActivity"
+    private var TAG = "MAINActivity"
     //var NetflixSourceID = 203
     //var HuluSourceID = 157
     private var sourceList = listOf(203, 157) //NetflixSourceID = 203; HuluSourceID = 157
     lateinit var db: TitleRoomDB //global var db for type room db
     private var availPageCnt: Int = 0
+    //private var page_counter = 1
+    private var availableList = ArrayList<content_title>()
+    lateinit var availableResultsAdapter: mainRecyclerAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +40,7 @@ class MainActivity : AppCompatActivity() {
 
         //VPC - creating an array for available titles
         val availableList = ArrayList<content_title>()
-        val availableResultsAdapter = mainRecyclerAdapter(availableList)
+        availableResultsAdapter = mainRecyclerAdapter(availableList)
 
         //VPC - building the database to store all titles we pull down
         db = Room.databaseBuilder(
@@ -54,76 +57,12 @@ class MainActivity : AppCompatActivity() {
         availableResultsRecyclerView.adapter = availableResultsAdapter
         availableResultsRecyclerView.layoutManager = LinearLayoutManager(this)
 
-        //VPC - creating the retrofit for the main movie list endpoint
-        val titlesRetrofit = Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-
-        val getmoviesAPI = titlesRetrofit.create(watchmodeAPI::class.java)
-
         // VPC - Loop should execute a call for each of the sources to the API netflix(203) and hulu(157)
         for (callSourceId in sourceList){
-            var page_counter = 1
-            //VPC - need to implement a do while. First exec of loop will tell us how many pages we need to hit for API response.
-            // the return limit is 250 titles per page,
-            do {
-                getmoviesAPI.getContent(
-                    resources.getString(R.string.watchmodeAPIkey),
-                    "movie",
-                    page_counter,
-                    callSourceId
-                ) //sourceId previously hardcoded as NetflixSourceID
-                    .enqueue(object :
-                        Callback<contentData> {
-                        override fun onResponse(
-                            call: Call<contentData>,
-                            mainResponse: Response<contentData>
-                        ) {
-                            Log.d(TAG, "onResponse: $mainResponse")
-                            var contentBody = mainResponse.body()
+            //page_counter = 1
+            //this is like a recursive call. The callAPI fun calls itself until the page number limit is reached
+            callAPI(callSourceId, 1 )// initially page_counter but we pass the incremented one into the recursive cal
 
-                            if (mainResponse == null) {
-                                Log.w(TAG, "Valid response was not received")
-                                return
-                            }
-                            //VPC = getting the total number of pages from the response
-                            // safe call default o 0 if we get no response so we don't inf loop
-                            availPageCnt = contentBody?.total_pages?.toInt() ?: 0
-                            Log.d(TAG, "onResponse: $availPageCnt for source $callSourceId")
-
-                            // MG - The following log messages are just for testing purpose
-                            Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
-                            Log.d(TAG, "Title: ${contentBody?.titles?.get(0)?.title}")
-                            Log.d(TAG, "Year: ${contentBody?.titles?.get(0)?.year}")
-                            Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
-                            Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")
-                            Log.d(TAG, "call source: $callSourceId    size of content body:$")
-                            // Update the adapter with the data from the API call
-                            contentBody?.titles?.let { availableList.addAll(it) }
-
-                            //VPC - Add the source ID to each record. This is why we cannot just call the API once with both source IDs
-                            // we need to know for each record what service streams the title.
-                            for (content_title in contentBody?.titles!!) {
-                                content_title.sourceID = callSourceId
-                            }
-
-                            //VPC - Here we need to call putIntoDB once it is implemented so we can cross reference
-                            // these records in the search functionality.
-                            putIntoDB(contentBody.titles)
-
-                            //following line randomized all info in the array before passing it to the recyclerView.
-                            Collections.shuffle(contentBody.titles)
-                            availableResultsAdapter.notifyDataSetChanged()
-                        }
-
-                        override fun onFailure(call: Call<contentData>, t: Throwable) {
-                            Log.d(TAG, "onFailure : $t")
-                        }
-                    })
-                //increment so that next pass gets the next page of API responses
-                page_counter ++
-            } while(page_counter <= availPageCnt)
         }
         //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
         // for now going to use a button to load the DB
@@ -157,6 +96,74 @@ class MainActivity : AppCompatActivity() {
             searchActivityLauncher.launch(searchIntent)
         }
     }//end OnCreate
+
+    private fun callAPI(inSourceId: Int, pgCnt: Int){
+
+        //VPC - creating the retrofit for the main movie list endpoint
+        val titlesRetrofit = Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+        val getmoviesAPI = titlesRetrofit.create(watchmodeAPI::class.java)
+
+        getmoviesAPI.getContent(
+            resources.getString(R.string.watchmodeAPIkey),
+            "movie",
+            pgCnt,
+            inSourceId //sourceId previously hardcoded as NetflixSourceID
+        ).enqueue(object : Callback<contentData> {
+                override fun onResponse(
+                    call: Call<contentData>,
+                    mainResponse: Response<contentData>
+                ) {
+                    Log.d(TAG, "onResponse: $mainResponse")
+                    var contentBody = mainResponse.body()
+
+                    if (mainResponse == null) {
+                        Log.w(TAG, "Valid response was not received")
+                        return
+                    }
+                    //VPC = getting the total number of pages from the response
+                    // safe call default o 0 if we get no response so we don't inf loop
+                    availPageCnt = contentBody?.total_pages?.toInt() ?: 0
+                    Log.d(TAG, "onResponse: $availPageCnt pages for source $inSourceId")
+
+                    // MG - The following log messages are just for testing purpose
+                    /*                     Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
+                                         Log.d(TAG, "Title: ${contentBody?.titles?.get(0)?.title}")
+                                         Log.d(TAG, "Year: ${contentBody?.titles?.get(0)?.year}")
+                                         Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
+                                         Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")*/
+                    //Log.d(TAG, "call source: $callSourceId    size of content body:$")
+                    // Update the adapter with the data from the API call
+                    contentBody?.titles?.let { availableList.addAll(it) }
+
+                    //VPC - Add the source ID to each record. This is why we cannot just call the API once with both source IDs
+                    // we need to know for each record what service streams the title.
+                    for (content_title in contentBody?.titles!!) {
+                        content_title.sourceID = inSourceId
+                    }
+
+                    //VPC - Here we need to call putIntoDB once it is implemented so we can cross reference
+                    // these records in the search functionality.
+                    putIntoDB(contentBody.titles)
+
+                    //following line randomized all info in the array before passing it to the recyclerView.
+                    Collections.shuffle(contentBody.titles)
+                    availableResultsAdapter.notifyDataSetChanged()
+                    //increment so that next pass gets the next page of API responses
+
+                    val pgCnt_temp = pgCnt + 1
+                    if (pgCnt_temp <= availPageCnt && pgCnt_temp < 14) {
+                        callAPI(inSourceId, pgCnt_temp)
+                    }
+                }
+            override fun onFailure(call: Call<contentData>, t: Throwable) {
+                Log.d(TAG, "onFailure : $t")
+                }
+            })
+        }
+
     //VPC - this function will serve to take the input of the contentBody response from
     // the API and insert records into the DB AFTER we added the source ID
     @SuppressLint("SuspiciousIndentation")

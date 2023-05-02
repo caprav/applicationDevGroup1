@@ -10,6 +10,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.room.Room
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -22,7 +23,8 @@ class SearchActivity : AppCompatActivity() {
     private val TAG = "SearchActivity"
     private var BASE_URL_SEARCH = "https://api.watchmode.com/v1/search/"
     private var BASE_URL_IMDB = "https://imdb-api.com/en/API/"
-
+    lateinit var db: TitleRoomDB
+    lateinit var returnRec: TitleDBEntity
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
@@ -90,13 +92,13 @@ class SearchActivity : AppCompatActivity() {
 
                             val IMDBlist = ArrayList<knownFor>()
 
-                            // Create Retrofit for the second API call
+                            // MG -Create Retrofit for the second API call
                             val IMDBsearchRetrofit = Retrofit.Builder()
                                 .baseUrl(BASE_URL_IMDB)
                                 .addConverterFactory(GsonConverterFactory.create())
                                 .build()
 
-                            // Call the second API
+                            // MG - Call the second API
                             if(TopPerson != "") {
                                 val searchIMDBAPI = IMDBsearchRetrofit.create(IMDBAPI::class.java)
                                 searchIMDBAPI.search(
@@ -130,7 +132,18 @@ class SearchActivity : AppCompatActivity() {
                                                     TAG,
                                                     "Role: ${body.knownFor.get(0).fullTitle}"
                                                 )
-                                                IMDBlist.addAll(body.knownFor)
+
+                                                // VPC - Adding ONLY titles to the list if the role of the person is Actor OR director
+                                                // AND the title is in the DB (which implies it is available on either Hulu or Netflix)
+                                                for(knownFor in body.knownFor){
+                                                    if(knownFor.role == "Actor" || knownFor.role == "Director") {
+                                                        //Calling function and getting back only records that match
+                                                        val titleToAddToRecycArrayAdapter =
+                                                            checkDBforTitle(knownFor.id)
+                                                        //IMDBlist.add(knownFor) //addAll(body.knownFor)
+
+                                                    }
+                                                }
                                             } else {
                                                 Log.w(TAG, "IMDB results list is empty")
                                             }
@@ -149,7 +162,7 @@ class SearchActivity : AppCompatActivity() {
                             Log.w(TAG, "People results list is empty")
                         }
 
-                        // Update the adapter with the new data
+                        //MG - Update the adapter with the new data
                         resultsAdapter.notifyDataSetChanged()
                     }
 
@@ -158,16 +171,25 @@ class SearchActivity : AppCompatActivity() {
                     }
                 })
 
-            // Update the adapter with the new data
+            //MG -  Update the adapter with the new data
             resultsAdapter.notifyDataSetChanged()
         }
     }
 
-                        //VPC - very simple function to go back to the main activity on click
+    //VPC - very simple function to go back to the main activity on click
     fun backClick(view: View){
         finish()
     }
-
+    //VPC - takes a title ID string in the format 'tt0356910' and if it finds a record, it returns that record
+    private fun checkDBforTitle(searchString: String):TitleDBEntity{
+        Thread {
+                returnRec = db.titleDAO().findimdbIDMatch(searchString)
+            runOnUiThread {
+                // Do your UI operations
+            }
+        }.start()
+        return returnRec
+    }
     private fun View.hideKeyboard(){
         val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         inputMethodManager.hideSoftInputFromWindow(windowToken,0)
