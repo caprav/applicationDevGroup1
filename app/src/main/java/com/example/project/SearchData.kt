@@ -3,23 +3,31 @@ package com.example.project
 data class SearchData (
     val title_results: List<title_results>,
     val people_results: List<people_results>,
-    val knownFor: List<knownFor>
+    val knownFor: List<knownFor>,
+    val castMovies: List<castMovies>
 )
-
 data class title_results(
+    val source_id: Int,
     val id: Int,
     val name: String,
     val year: Int,
     val imdb_id: String,
     val type: String
 )
-
 data class people_results(
     val id: Int,
     val name: String,
     val main_profession: String,
     val imdb_id: String,
 )
+data class castMovies(
+    val id: String,
+    val role: String,
+    val title: String,
+    val year: String,
+    val description: String
+)
+
 data class knownFor(
     val id: String,
     val title: String,
@@ -27,6 +35,7 @@ data class knownFor(
     val role: String,
     val image: String,
 )
+
 
 
 

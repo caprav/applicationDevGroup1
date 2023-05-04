@@ -29,6 +29,11 @@ interface TitleDBDAO {
     @Query("SELECT * FROM titles_table WHERE imdb_id LIKE :IMDBid")
     fun findimdbIDMatch(IMDBid: String): TitleDBEntity
 
+
+    // SELECT COUNT(column_name) FROM table_name;
+    @Query ("SELECT COUNT(id) FROM titles_table WHERE imdb_id LIKE :IMDBid")
+    fun imdbIDMatchExsists(IMDBid: String): Int
+
     //this will clear all data from the existing table. Should be done on app startup
     @Query("DELETE FROM titles_table")
     public fun clearTitleTable()

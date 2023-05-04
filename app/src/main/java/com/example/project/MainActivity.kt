@@ -5,22 +5,22 @@
 package com.example.project
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.ImageButton
-import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.Collections
+
 
 class MainActivity : AppCompatActivity() {
     private var BASE_URL = "https://api.watchmode.com/v1/list-titles/"
@@ -38,15 +38,22 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // an attempt to see what is throwing the "resource failed to call close" issue
+        StrictMode.setVmPolicy(
+            VmPolicy.Builder(StrictMode.getVmPolicy())
+                .detectLeakedClosableObjects()
+                .build()
+        )
+
         //VPC - creating an array for available titles
-        val availableList = ArrayList<content_title>()
         availableResultsAdapter = mainRecyclerAdapter(availableList)
 
         //VPC - building the database to store all titles we pull down
         db = Room.databaseBuilder(
             applicationContext, TitleRoomDB::class.java, "titles.db"
-        ).fallbackToDestructiveMigration() // this resolves some errors, credit to https://stackoverflow.com/questions/49629656/please-provide-a-migration-in-the-builder-or-call-fallbacktodestructivemigration
-            .build()
+        ).build() //.fallbackToDestructiveMigration() // this resolves some errors, credit to https://stackoverflow.com/questions/49629656/please-provide-a-migration-in-the-builder-or-call-fallbacktodestructivemigration
+        //alternate use, but seems to break the putIntoDB function
+        //db = TitleRoomDB.getInstance(this)
 
         //VPC - This will wipe out persisted data in the db from the last run of the application. We always
         // want to get the latest data from the APIs
@@ -56,19 +63,23 @@ class MainActivity : AppCompatActivity() {
         val availableResultsRecyclerView = findViewById<RecyclerView>(R.id.recycler_main_results)
         availableResultsRecyclerView.adapter = availableResultsAdapter
         availableResultsRecyclerView.layoutManager = LinearLayoutManager(this)
+        //add vertical divider to the recyclerview
+        val dividerItemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+        availableResultsRecyclerView.addItemDecoration(dividerItemDecoration)
+
 
         // VPC - Loop should execute a call for each of the sources to the API netflix(203) and hulu(157)
         for (callSourceId in sourceList){
-            //page_counter = 1
             //this is like a recursive call. The callAPI fun calls itself until the page number limit is reached
             callAPI(callSourceId, 1 )// initially page_counter but we pass the incremented one into the recursive cal
-
         }
+
         //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
         // for now going to use a button to load the DB
-   /*     findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
-            putIntoDB(availableResultsAdapter.mainTitles)
-        }*/
+        findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
+            //putIntoDB(availableResultsAdapter.mainTitles)
+            availableResultsAdapter.notifyDataSetChanged()
+        }
 
         //VPC - creating user activity launcher
         val userActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -135,8 +146,8 @@ class MainActivity : AppCompatActivity() {
                                          Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
                                          Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")*/
                     //Log.d(TAG, "call source: $callSourceId    size of content body:$")
-                    // Update the adapter with the data from the API call
-                    contentBody?.titles?.let { availableList.addAll(it) }
+
+
 
                     //VPC - Add the source ID to each record. This is why we cannot just call the API once with both source IDs
                     // we need to know for each record what service streams the title.
@@ -148,15 +159,25 @@ class MainActivity : AppCompatActivity() {
                     // these records in the search functionality.
                     putIntoDB(contentBody.titles)
 
-                    //following line randomized all info in the array before passing it to the recyclerView.
-                    Collections.shuffle(contentBody.titles)
-                    availableResultsAdapter.notifyDataSetChanged()
-                    //increment so that next pass gets the next page of API responses
+                    // Update the adapter with the data from the API call
+                    contentBody?.titles?.let { availableList.addAll(it) }
 
-                    val pgCnt_temp = pgCnt + 1
+                    //putting the data into the array used for the recycler view
+                   // availableList = ArrayList(contentBody.titles)
+
+                    //following line randomized all info in the array before passing it to the recyclerView.
+                    //availableResultsAdapter.mainTitles.shuffle()
+                    availableResultsAdapter.notifyDataSetChanged()
+
+                    //increment so that next pass gets the next page of API responses
+ /*                   val pgCnt_temp = pgCnt + 1
                     if (pgCnt_temp <= availPageCnt && pgCnt_temp < 14) {
                         callAPI(inSourceId, pgCnt_temp)
                     }
+                    else {
+                        availableResultsAdapter.mainTitles.shuffle()
+                        availableResultsAdapter.notifyDataSetChanged()
+                    }*/
                 }
             override fun onFailure(call: Call<contentData>, t: Throwable) {
                 Log.d(TAG, "onFailure : $t")
@@ -200,10 +221,16 @@ class MainActivity : AppCompatActivity() {
             //VPC - The implementation of this was thanks to:
             // https://stackoverflow.com/questions/44244508/room-persistance-library-delete-all
             db.titleDAO().clearTitleTable()
+            Log.d(TAG, "DONE Wiping the title database")
             // We cannot call showDialog from a non-UI thread, instead we can call it from a runOnUiThread to access our views
             runOnUiThread {
                 // Do your UI operations
             }
         }.start()
+
+    }
+    //VPC - adding because when the search activity fails, we're hitting our API twice more and clearing the DB.
+    override fun onResume(){
+        super.onResume()
     }
 }

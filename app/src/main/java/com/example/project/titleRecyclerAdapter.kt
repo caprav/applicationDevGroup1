@@ -1,5 +1,6 @@
 package com.example.project
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -18,6 +19,7 @@ class titleRecyclerAdapter(val rcvTitles: ArrayList<title_results>) : RecyclerVi
         val contentYear = itemView.findViewById<TextView>(R.id.textView_year)
         val contentType = itemView.findViewById<TextView>(R.id.textView_contentType)
         val contentPosterImg = itemView.findViewById<ImageView>(R.id.imageView_poster)
+        var background = itemView.findViewById<View>(R.id.constraint_titleItem)
 
     }
 
@@ -40,6 +42,13 @@ class titleRecyclerAdapter(val rcvTitles: ArrayList<title_results>) : RecyclerVi
         holder.contentYear.text = currentTitle.year.toString()
         holder.contentType.text = currentTitle.type
         //holder.contentPosterImg = TBD
+
+    //VPC - to implement when we properly store the array data from the DB data set.
+        if(currentTitle.source_id == 203) {
+            holder.background.setBackgroundColor(Color.parseColor("#AC1818"))
+        }
+        else
+            holder.background.setBackgroundColor(Color.parseColor("#3DBC70"))
     }
 
 }

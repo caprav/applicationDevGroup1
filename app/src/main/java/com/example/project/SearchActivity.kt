@@ -25,11 +25,16 @@ class SearchActivity : AppCompatActivity() {
     private var BASE_URL_IMDB = "https://imdb-api.com/en/API/"
     lateinit var db: TitleRoomDB
     lateinit var returnRec: TitleDBEntity
+    private var displayTitles =  ArrayList<title_results>()
+    lateinit var resultsAdapter: titleRecyclerAdapter
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
         //VPC - on search click by user, inflate the fragment that will return a recycler
         // View with the search result items
+        db = TitleRoomDB.getInstance(this)
+
         findViewById<Button>(R.id.button_titleSearch).setOnClickListener() {
 
             // Get user input search string
@@ -43,7 +48,7 @@ class SearchActivity : AppCompatActivity() {
             val searchList = ArrayList<title_results>()
             val searchListPerson = ArrayList<people_results>()
             //val titlesData = ArrayList<title_results>() // redundantly created
-            val resultsAdapter = titleRecyclerAdapter(searchList)
+            resultsAdapter = titleRecyclerAdapter(displayTitles) //(searchList)
             var TopPerson = "test"
             // Create Retrofit
             val searchRetrofit = Retrofit.Builder()
@@ -90,8 +95,6 @@ class SearchActivity : AppCompatActivity() {
                             TopPerson = body.people_results.get(0).imdb_id
                             searchListPerson.addAll(body.people_results)
 
-                            val IMDBlist = ArrayList<knownFor>()
-
                             // MG -Create Retrofit for the second API call
                             val IMDBsearchRetrofit = Retrofit.Builder()
                                 .baseUrl(BASE_URL_IMDB)
@@ -104,59 +107,51 @@ class SearchActivity : AppCompatActivity() {
                                 searchIMDBAPI.search(
                                     resources.getString(R.string.IMDBAPIkey),
                                     TopPerson
-                                )
-                                    .enqueue(object : Callback<SearchData> {
-                                        override fun onResponse(
-                                            call: Call<SearchData>,
-                                            response: Response<SearchData>
-                                        ) {
-                                            Log.d(TAG, "onResponse: $response")
+                                ).enqueue(object : Callback<SearchData> {
 
-                                            val body = response.body()
-                                            if (body == null) {
-                                                Log.w(TAG, "Valid response was not received")
-                                                return
-                                            }
-                                            //Log.w(TAG, "This is the response ${IMDBbody.knownFor.get(0)}")
-                                            // The following log messages are just for testing purpose
-                                            if (body.knownFor.isNotEmpty()) {
-                                                Log.d(
-                                                    TAG,
-                                                    "Person ID: ${body.knownFor.get(0).id}"
-                                                )
-                                                Log.d(
-                                                    TAG,
-                                                    "Name: ${body.knownFor.get(0).title}"
-                                                )
-                                                Log.d(
-                                                    TAG,
-                                                    "Role: ${body.knownFor.get(0).fullTitle}"
-                                                )
+                                    override fun onResponse(
+                                        call: Call<SearchData>,
+                                        response: Response<SearchData>
+                                    ) {
+                                        Log.d(TAG, "onResponse: $response")
 
-                                                // VPC - Adding ONLY titles to the list if the role of the person is Actor OR director
-                                                // AND the title is in the DB (which implies it is available on either Hulu or Netflix)
-                                                for(knownFor in body.knownFor){
-                                                    if(knownFor.role == "Actor" || knownFor.role == "Director") {
-                                                        //Calling function and getting back only records that match
-                                                        val titleToAddToRecycArrayAdapter =
-                                                            checkDBforTitle(knownFor.id)
-                                                        //IMDBlist.add(knownFor) //addAll(body.knownFor)
+                                        val body = response.body()
+                                        if (body == null) {
+                                            Log.w(TAG, "Valid response was not received")
+                                            return
+                                        }
+                                        //Log.w(TAG, "This is the response ${IMDBbody.knownFor.get(0)}")
+                                        // The following log messages are just for testing purpose
+                                        if (body.castMovies.isNotEmpty()) {
+                                            /*Log.d(TAG, "Person ID: ${body.knownFor.get(0).id}")
+                                            Log.d(TAG, "Name: ${body.knownFor.get(0).title}")
+                                            Log.d(TAG, "Role: ${body.knownFor.get(0).fullTitle}")*/
 
-                                                    }
+                                            // VPC - Adding ONLY titles to the list if the role of the person is Actor OR director
+                                            // AND the title is in the DB (which implies it is available on either Hulu or Netflix)
+                                            for (castMovies in body.castMovies) {
+                                                if (castMovies.role == "Actor" || castMovies.role == "Director" || castMovies.role == "Actress") {
+                                                    //Calling function and adding matching records
+                                                    checkDBforTitle(castMovies.id)
                                                 }
-                                            } else {
-                                                Log.w(TAG, "IMDB results list is empty")
                                             }
-
+                                            //VPC - This should update the recycler adapter once the array is build from the
+                                            // checking of the DB records
+                                            resultsAdapter.notifyDataSetChanged()
+                                        }
+                                        else {
+                                            Log.w(TAG, "IMDB results list is empty")
                                         }
 
-                                        override fun onFailure(
-                                            call: Call<SearchData>,
-                                            t: Throwable
-                                        ) {
-                                            Log.d(TAG, "onFailure : $t")
-                                        }
-                                    })
+                                    }
+
+                                    override fun onFailure(
+                                        call: Call<SearchData>,
+                                        t: Throwable
+                                    ) {
+                                        Log.d(TAG, "onFailure : $t")
+                                    }
+                                })
                             }
                         } else {
                             Log.w(TAG, "People results list is empty")
@@ -180,15 +175,31 @@ class SearchActivity : AppCompatActivity() {
     fun backClick(view: View){
         finish()
     }
-    //VPC - takes a title ID string in the format 'tt0356910' and if it finds a record, it returns that record
-    private fun checkDBforTitle(searchString: String):TitleDBEntity{
+    //VPC - takes a title ID string in the format 'tt0356910' and if it finds a record, adds the record to
+    // the recycler view array list
+    private fun checkDBforTitle(searchString: String){
         Thread {
+
+            val row = db.titleDAO().imdbIDMatchExsists(searchString)
+            Log.d(TAG, "checkDBforTitle: $row")
+            if(row > 0) {
                 returnRec = db.titleDAO().findimdbIDMatch(searchString)
-            runOnUiThread {
-                // Do your UI operations
+                Log.d(TAG, "checkDBforTitle: $returnRec")
+                val tempTitleResultsElement = title_results(
+                    returnRec.contentSourceId,
+                    returnRec.id,
+                    returnRec.title,
+                    returnRec.year,
+                    returnRec.imdb_id,
+                    returnRec.type
+                )
+                displayTitles.add(tempTitleResultsElement)
+                runOnUiThread {
+                    resultsAdapter.notifyDataSetChanged()
+                }
             }
+   
         }.start()
-        return returnRec
     }
     private fun View.hideKeyboard(){
         val inputMethodManager = context.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager

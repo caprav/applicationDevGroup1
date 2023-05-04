@@ -22,6 +22,12 @@ class mainRecyclerAdapter(val mainTitles: ArrayList<content_title>) : RecyclerVi
         //val mainsource = itemView.findViewById<TextView>(R.id.textView_sourceID) // was for test purposes only
         var background = itemView.findViewById<View>(R.id.constraint_titleItem)
 
+        //VPC - Setting the click listener
+        init{
+            itemView.setOnClickListener{
+
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): maincontentViewHolder {
