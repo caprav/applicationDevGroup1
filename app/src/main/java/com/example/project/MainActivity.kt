@@ -18,11 +18,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
+import com.google.firebase.auth.FirebaseAuth
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import retrofit2.*
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.Collections
 
-class MainActivity : AppCompatActivity() {
+class  MainActivity : AppCompatActivity() {
     private var BASE_URL = "https://api.watchmode.com/v1/list-titles/"
     private val TAG = "MAINActivity"
     //var NetflixSourceID = 203
@@ -34,6 +37,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // test
+        getActiveUserSettings()
 
         //VPC - creating an array for available titles
         val availableList = ArrayList<content_title>()
@@ -63,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         val getmoviesAPI = titlesRetrofit.create(watchmodeAPI::class.java)
 
         // VPC - Loop should execute a call for each of the sources to the API netflix(203) and hulu(157)
-        for (callSourceId in sourceList){
+      /*  for (callSourceId in sourceList){
             var page_counter = 1
             //VPC - need to implement a do while. First exec of loop will tell us how many pages we need to hit for API response.
             // the return limit is 250 titles per page,
@@ -124,7 +130,7 @@ class MainActivity : AppCompatActivity() {
                 //increment so that next pass gets the next page of API responses
                 page_counter ++
             } while(page_counter <= availPageCnt)
-        }
+        }*/
         //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
         // for now going to use a button to load the DB
    /*     findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
@@ -157,6 +163,35 @@ class MainActivity : AppCompatActivity() {
             searchActivityLauncher.launch(searchIntent)
         }
     }//end OnCreate
+
+    private fun getActiveUserSettings() {
+
+        val user = FirebaseAuth.getInstance().currentUser
+        Log.d(TAG, "onActivityResult: $user")
+
+        val userId = user?.uid.toString()
+
+        // Create an instance of getSharedPreferences for edit
+        val sharedPreferences = getSharedPreferences(userId, MODE_PRIVATE)
+        // Retrieve data using the key, default value is empty string in case no saved data in there
+        val subscriptions = sharedPreferences.getString("subs", "") ?: ""
+
+
+
+        val gson = Gson()
+        val stringType = object : TypeToken<List<String>>() {}.type
+
+        // this will deserialize the previously saved Json into an object of the specified type (e.g., list)
+        val savedSubs= gson.fromJson<List<String>>(subscriptions, stringType)
+
+
+        for (sub in savedSubs) {
+            Log.d(TAG, sub)
+        }
+
+
+    }
+
     //VPC - this function will serve to take the input of the contentBody response from
     // the API and insert records into the DB AFTER we added the source ID
     @SuppressLint("SuspiciousIndentation")

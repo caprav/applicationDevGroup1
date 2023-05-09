@@ -7,7 +7,6 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.CheckBox
-import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
 import com.google.gson.Gson
@@ -35,6 +34,7 @@ class UserActivity : AppCompatActivity() {
         allUserSharedPreferences = getSharedPreferences(R.string.allUsers.toString(), MODE_PRIVATE)
         //VPC -getting the user/settings from Shared preferences on Activity create
         getActiveUser() //sets activeUser from SharedPrefs
+
         if(activeUser != ""){
 
             getActiveUserSettings()
@@ -45,23 +45,21 @@ class UserActivity : AppCompatActivity() {
         checkboxHulu.isChecked = HuluSet
         //VPC - we will set the global value of Netflix and Hulu as set if the user clicks either
         // checkbox and they are an active user
-        checkboxNetflix.setOnClickListener(){
+       /* checkboxNetflix.setOnClickListener(){
             if(checkActiveUser()){
                 NetflixSet = checkboxNetflix.isChecked
-                //Ramya - updated shared prefs for user here
-            }
-        }
-        checkboxHulu.setOnClickListener(){
-            if(checkActiveUser()){
+                netflixUser()
                 HuluSet = checkboxHulu.isChecked
+                huluUser()
+                checkBoxClick()
                 //Ramya - updated shared prefs for user here
-                val sharedPreferences = getPreferences(MODE_PRIVATE)
-                activeUser = sharedPreferences?.getString("Username of  Subscriber","").toString()
-                userText.text = activeUser
             }
-        }
+        }*/
+
+
+
         //VPC - button click to bring up the user login Fragment
-        findViewById<Button>(R.id.button_chgUser).setOnClickListener(){
+        findViewById<Button>(R.id.button_pref).setOnClickListener(){
             supportFragmentManager.beginTransaction()
                 .replace(R.id.container_user, userLoginFragment())
                 .addToBackStack(null)
@@ -73,14 +71,27 @@ class UserActivity : AppCompatActivity() {
     private fun getActiveUser(){
         actUserSharedPref = getSharedPreferences(R.string.activeUser.toString(), MODE_PRIVATE)
         //set global variable with the active user from shared preferences
-        activeUser = actUserSharedPref?.getString("Username of  Subscriber", "").toString()
+
+        activeUser = actUserSharedPref.getString("activeUser", "").toString()
+
+
     }
 
+    override fun onResume() {
+        super.onResume()
+       // activeUser = userLoginFragment().userName
+        getActiveUser() //sets activeUser from SharedPrefs
+
+        if(activeUser != ""){
+
+            getActiveUserSettings()
+        }
+    }
     @SuppressLint("CommitPrefEdits")
     private fun getActiveUserSettings() {
         val gson = Gson()
         val stringType = object : TypeToken<List<String>>() {}.type
-        var usernameSaved = allUserSharedPreferences.getString(activeUser, "")
+        val usernameSaved = allUserSharedPreferences.getString(activeUser, "")
         val userConfigsStringList =
             gson.fromJson<List<String>>(usernameSaved, stringType)
         // val userEditor = allUserSharedPreferences?.edit()
@@ -90,37 +101,42 @@ class UserActivity : AppCompatActivity() {
             HuluSet = userConfigsStringList[2].toBoolean()
         }
 
+    }
+    private fun netflixUser(){
+        val gson = Gson()
+        val userConfigsStringList = mutableListOf<String>()
+        userConfigsStringList.add(activeUser)
+        userConfigsStringList.add(NetflixSet.toString())
+        userConfigsStringList.add(HuluSet.toString())
+        val userJsonString = gson.toJson(userConfigsStringList)
+        val editor = allUserSharedPreferences.edit()
+        editor.putString(activeUser, userJsonString)
+        editor.apply()
+    }
+   private fun huluUser(){
+       val gson = Gson()
+       val userConfigsStringList = mutableListOf<String>()
+       userConfigsStringList.add(activeUser)
+       userConfigsStringList.add(NetflixSet.toString())
+       userConfigsStringList.add(HuluSet.toString())
+       val userJsonString = gson.toJson(userConfigsStringList)
+       val editor = allUserSharedPreferences.edit()
+       editor.putString(activeUser, userJsonString)
+       editor.apply()
+    }
+        fun checkBoxClick(view: View){
+            if (view is CheckBox){
+                val checked: Boolean = view.isChecked
+                when (view.id) {
+                    R.id.checkBox_netflix -> NetflixSet = checked
+                    R.id.checkBox_hulu -> HuluSet = checked
 
-    }
-   private fun netflixUser(){
-       val gson2 = Gson()
-       val stringType = object : TypeToken<List<String>>() {}.type
-       var usernameSaved = allUserSharedPreferences.getString(activeUser,"")
-       val userEditor = allUserSharedPreferences?.edit()
-       val userConfigsStringList =
-           gson2.fromJson<List<String>>(usernameSaved, stringType).toMutableList()
-       userConfigsStringList[1] = NetflixSet.toString()
-       val userList = ArrayList<String>()
-       //userList.add("true")
-       val userJsonString = gson2.toJson(userList)
-       userEditor?.putString(usernameSaved, userJsonString) //default new users to be false
-       userEditor?.apply()
-    }
-    private fun huluUser(){
-        val gson2 = Gson()
-        val stringType = object : TypeToken<List<String>>() {}.type
-        var usernameSaved = allUserSharedPreferences.getString(activeUser,"")
-        val userEditor = allUserSharedPreferences?.edit()
-        val userConfigsStringList =
-            gson2.fromJson<List<String>>(usernameSaved, stringType).toMutableList()
-        userConfigsStringList[2] = HuluSet.toString()
-        val userList = ArrayList<String>()
-        //userList.add("true")
-        val userJsonString = gson2.toJson(userList)
-        userEditor?.putString(usernameSaved, userJsonString) //default new users to be false
-        userEditor?.apply()
+                }
 
-    }
+            }
+                netflixUser()
+            huluUser()
+        }
 
     private fun checkActiveUser(): Boolean{
         return if (activeUser != ""){
