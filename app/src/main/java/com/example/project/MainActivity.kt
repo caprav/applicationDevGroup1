@@ -69,7 +69,7 @@ class  MainActivity : AppCompatActivity() {
         val getmoviesAPI = titlesRetrofit.create(watchmodeAPI::class.java)
 
         // VPC - Loop should execute a call for each of the sources to the API netflix(203) and hulu(157)
-      /*  for (callSourceId in sourceList){
+        for (callSourceId in sourceList){
             var page_counter = 1
             //VPC - need to implement a do while. First exec of loop will tell us how many pages we need to hit for API response.
             // the return limit is 250 titles per page,
@@ -130,7 +130,7 @@ class  MainActivity : AppCompatActivity() {
                 //increment so that next pass gets the next page of API responses
                 page_counter ++
             } while(page_counter <= availPageCnt)
-        }*/
+        }
         //VPC - Since I'm not sure how to load the DB on a single transaction programmatically,
         // for now going to use a button to load the DB
    /*     findViewById<Button>(R.id.button_loadDB).setOnClickListener(){
@@ -188,8 +188,6 @@ class  MainActivity : AppCompatActivity() {
         for (sub in savedSubs) {
             Log.d(TAG, sub)
         }
-
-
     }
 
     //VPC - this function will serve to take the input of the contentBody response from
