@@ -27,6 +27,7 @@ class userLoginFragment : Fragment() {
     lateinit var actUserSharedPref: SharedPreferences
     lateinit var allUserSharedPreferences: SharedPreferences
     private val TAG = "userFragment"
+    @SuppressLint("SetTextI18n")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View? {
@@ -40,7 +41,7 @@ class userLoginFragment : Fragment() {
             userName = editTextObjUser.text.toString()
             Log.d(TAG, "userName = $userName")
             userPW = editTextObjPW.text.toString()
-            Log.d(TAG, "userName = $userPW")
+            Log.d(TAG, "userPw = $userPW")
             //clear fields and hide keyboards
             editTextObjUser.hideKeyboard()
             editTextObjPW.hideKeyboard()
@@ -64,7 +65,7 @@ class userLoginFragment : Fragment() {
                         //check PW entered against PW in shared preferences.
                         if (userPW == storedPW){ //storedPW is the wrong PW, need to get from a match in the allusers SP
                             // Set the active user as the user from shared prefs.
-
+                            setActiveUser()
                             //for now just testing with a display of the user and PW entered
                             val checktext = loginView.findViewById<TextView>(R.id.textView_test)
                             checktext.text = "$userName $userPW"
@@ -110,7 +111,7 @@ class userLoginFragment : Fragment() {
     private fun createNewUser(){
 
         //initializing the shared prefs variable and editor
-        allUserSharedPreferences =this.requireActivity().getSharedPreferences(R.string.allUsers.toString(),MODE_PRIVATE)
+        allUserSharedPreferences =this.requireActivity().getSharedPreferences(userName,MODE_PRIVATE)
         val usersEditor = allUserSharedPreferences?.edit()
 
         //creating an array to store the PW, Netflix enable, and hulu enable as a GSON string
@@ -118,7 +119,7 @@ class userLoginFragment : Fragment() {
         val userGSON = Gson() // creating a GSON instance
 
         //might want to if check to see user supplied a PW if not done above
-        userList.add(userPW)    // arg 1 = the newly entered user PW
+        //userList.add(userPW)    // arg 1 = the newly entered user PW
         userList.add("false")   // arg 2 = Netflix enabled bool as string, default false
         userList.add("false")   // arg 3 = Hulu enabled bool as string, default false
         val userJsonString = userGSON.toJson(userList)
@@ -157,6 +158,7 @@ class userLoginFragment : Fragment() {
         actUserEdittext?.putString("activeUser",userName )  //put new active user in Sprefs
         actUserEdittext?.putString("activePW",userPW )      // put new active PW in Sprefs
         actUserEdittext?.apply()
+          //  (activity as? userActivity).activeUser = userName
     }
 
     //VPC - getting setting the global variables with user and PW from shared preferences

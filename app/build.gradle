@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'com.google.gms.google-services'
     // tried from https://kotlinlang.org/docs/kapt.html#using-in-gradle
     //id "org.jetbrains.kotlin.kapt" version "1.8.20" // also tried 1.8.21
 }
@@ -42,6 +43,20 @@ android {
 }
 
 dependencies {
+
+    // Import Firestore
+    implementation 'com.google.firebase:firebase-firestore:24.5.0'
+
+    // Import the Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:29.3.1')
+
+    // Declare the dependencies for any other desired Firebase products
+    // For example, declare the dependencies for Firebase Authentication and Cloud Firestore
+    implementation 'com.google.firebase:firebase-auth-ktx'
+    implementation 'com.google.firebase:firebase-firestore-ktx'
+
+    // FirebaseUI for Firebase Auth
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.2'
 
     //following 4 lines for room database support
     def room_version = "2.5.1" //tried 2.4.2, tried 2.5.1
