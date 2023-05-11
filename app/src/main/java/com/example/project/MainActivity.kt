@@ -43,8 +43,8 @@ class  MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         //VPC - creating an array for available titles
-        val availableList = ArrayList<content_title>()
-        val availableResultsAdapter = mainRecyclerAdapter(availableList)
+        availableList = ArrayList<content_title>()
+        availableResultsAdapter = mainRecyclerAdapter(availableList)
 
         // RS - test
         getActiveUserSettings()
@@ -146,6 +146,7 @@ class  MainActivity : AppCompatActivity() {
             pgCnt,
             inSourceId //sourceId previously hardcoded as NetflixSourceID
         ).enqueue(object : Callback<contentData> {
+            @SuppressLint("NotifyDataSetChanged")
             override fun onResponse(
                 call: Call<contentData>,
                 mainResponse: Response<contentData>
@@ -163,11 +164,11 @@ class  MainActivity : AppCompatActivity() {
                 Log.d(TAG, "onResponse: $availPageCnt pages for source $inSourceId")
 
                 // MG - The following log messages are just for testing purpose
-                                     Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
+/*                                     Log.d(TAG, "Movie ID: ${contentBody?.titles?.get(0)?.id}")
                                      Log.d(TAG, "Title: ${contentBody?.titles?.get(0)?.title}")
                                      Log.d(TAG, "Year: ${contentBody?.titles?.get(0)?.year}")
                                      Log.d(TAG, "IMDB_ID: ${contentBody?.titles?.get(0)?.imdb_id}")
-                                     Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")
+                                     Log.d(TAG, "Type: ${contentBody?.titles?.get(0)?.type}")*/
                 //Log.d(TAG, "call source: $callSourceId    size of content body:$")
 
                 // Update the adapter with the data from the API call
@@ -190,7 +191,7 @@ class  MainActivity : AppCompatActivity() {
                 // availableList = ArrayList(contentBody.titles)
 
                 //following line randomized all info in the array before passing it to the recyclerView.
-                //availableResultsAdapter.mainTitles.shuffle()
+                availableResultsAdapter.mainTitles.shuffle()
                 availableResultsAdapter.notifyDataSetChanged()
 
                 //increment so that next pass gets the next page of API responses
@@ -233,6 +234,7 @@ class  MainActivity : AppCompatActivity() {
             }
             runOnUiThread {
                     // Do your UI operations
+                    //availableResultsAdapter.notifyDataSetChanged()
                 }
             }.start()
         Log.d(TAG, "Done Updating DB")

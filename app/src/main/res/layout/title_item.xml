@@ -5,6 +5,7 @@
     android:id="@+id/constraint_titleItem"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="#61A564"
     app:layout_marginBaseline="4dp">
 
     <ImageView

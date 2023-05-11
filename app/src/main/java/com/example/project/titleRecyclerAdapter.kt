@@ -45,10 +45,10 @@ class titleRecyclerAdapter(val rcvTitles: ArrayList<title_results>) : RecyclerVi
 
     //VPC - to implement when we properly store the array data from the DB data set.
         if(currentTitle.source_id == 203) {
-            holder.background.setBackgroundColor(Color.parseColor("#AC1818"))
+            holder.background.setBackgroundColor(Color.parseColor("#E85454")) //FFE85454 original red close to trademark AC1818
         }
         else
-            holder.background.setBackgroundColor(Color.parseColor("#3DBC70"))
+            holder.background.setBackgroundColor(Color.parseColor("#61A564")) // original green close to trademark 3DBC70
     }
 
 }

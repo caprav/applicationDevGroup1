@@ -38,6 +38,9 @@ class SearchActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.button_titleSearch).setOnClickListener() {
 
+            //VPC - clearing out the array on click in case user runs a different search
+            displayTitles.clear()
+
             // Get user input search string
             val editTextsearchInput = findViewById<EditText>(R.id.editText_searchInput)
             userSearchInput = editTextsearchInput.text.toString()
@@ -139,9 +142,6 @@ class SearchActivity : AppCompatActivity() {
                                                     checkDBforTitle(castMovies.id)
                                                 }
                                             }
-                                            //VPC - This should update the recycler adapter once the array is build from the
-                                            // checking of the DB records
-                                            resultsAdapter.notifyDataSetChanged()
                                         }
                                         else {
                                             Log.w(TAG, "IMDB results list is empty")
@@ -162,7 +162,7 @@ class SearchActivity : AppCompatActivity() {
                         }
 
                         //MG - Update the adapter with the new data
-                        resultsAdapter.notifyDataSetChanged()
+                        //resultsAdapter.notifyDataSetChanged()
                     }
 
                     override fun onFailure(call: Call<SearchData>, t: Throwable) {
@@ -171,7 +171,7 @@ class SearchActivity : AppCompatActivity() {
                 })
 
             //MG -  Update the adapter with the new data
-            resultsAdapter.notifyDataSetChanged()
+            //resultsAdapter.notifyDataSetChanged()
         }
     }
 
@@ -197,11 +197,14 @@ class SearchActivity : AppCompatActivity() {
                     returnRec.imdb_id,
                     returnRec.type
                 )
-                displayTitles.add(tempTitleResultsElement)
+                //VPC - there has got to be a better way to do this
+                if(displayTitles.any{ title_results -> title_results.imdb_id == returnRec.imdb_id }) {}//returnRec.imdb_id
+                else displayTitles.add(tempTitleResultsElement)
+
                 runOnUiThread {
                     //VPC - was seeing multiple rows commenting this out here but keeping above after the
                     // loop for (castMovies in body.castMovies) might work
-                    //resultsAdapter.notifyDataSetChanged()
+                    resultsAdapter.notifyDataSetChanged()
                 }
             }
    

@@ -23,11 +23,11 @@ class mainRecyclerAdapter(val mainTitles: ArrayList<content_title>) : RecyclerVi
         var background = itemView.findViewById<View>(R.id.constraint_titleItem)
 
         //VPC - Setting the click listener
-        init{
+/*        init{
             itemView.setOnClickListener{
 
             }
-        }
+        }*/
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): maincontentViewHolder {
@@ -56,10 +56,10 @@ class mainRecyclerAdapter(val mainTitles: ArrayList<content_title>) : RecyclerVi
         //used information from https://stackoverflow.com/questions/40692214/changing-background-color-of-selected-item-in-recyclerview
         // to implement the changing in background color.
         if(currentTitle.sourceID == 203) {
-            holder.background.setBackgroundColor(Color.parseColor("#AC1818"))
+            holder.background.setBackgroundColor(Color.parseColor("#E85454")) //FFE85454 original red close to trademark AC1818
         }
         else
-            holder.background.setBackgroundColor(Color.parseColor("#3DBC70"))
+            holder.background.setBackgroundColor(Color.parseColor("#61A564")) // original green close to trademark 3DBC70
 
     }
 

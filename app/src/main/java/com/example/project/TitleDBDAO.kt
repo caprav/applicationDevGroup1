@@ -26,7 +26,7 @@ interface TitleDBDAO {
 
     //VPC - this will be the function to use to find a title based on the universal IMDB ID
     // which is in the string format 'tt0109707'
-    @Query("SELECT * FROM titles_table WHERE imdb_id LIKE :IMDBid")
+    @Query("SELECT * FROM titles_table WHERE imdb_id LIKE :IMDBid limit 1")
     fun findimdbIDMatch(IMDBid: String): TitleDBEntity
 
 
