@@ -8,6 +8,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.room.Room
@@ -59,6 +60,9 @@ class SearchActivity : AppCompatActivity() {
             val resultsRecyclerView = findViewById<RecyclerView>(R.id.recycler_temp_results)
             resultsRecyclerView.adapter = resultsAdapter
             resultsRecyclerView.layoutManager = LinearLayoutManager(this)
+            //add vertical divider to the recyclerview
+            val dividerItemDecoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
+            resultsRecyclerView.addItemDecoration(dividerItemDecoration)
 
             val searchMovieAPI = searchRetrofit.create(watchmodeAPISearch::class.java)
 
@@ -195,7 +199,9 @@ class SearchActivity : AppCompatActivity() {
                 )
                 displayTitles.add(tempTitleResultsElement)
                 runOnUiThread {
-                    resultsAdapter.notifyDataSetChanged()
+                    //VPC - was seeing multiple rows commenting this out here but keeping above after the
+                    // loop for (castMovies in body.castMovies) might work
+                    //resultsAdapter.notifyDataSetChanged()
                 }
             }
    
